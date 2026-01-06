@@ -1,204 +1,186 @@
---[[
-you better have a good reason on WHY you are looking at the script raw
-]]
-
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local executor = identifyexecutor and identifyexecutor() or "Unknown Executor"
+
+-- ================= SAFE TELEPORT FUNCTION (REQUIRED) =================
+-- ASSUMES SafeTeleport IS ALREADY DEFINED IN YOUR ENVIRONMENT
+-- =====================================================================
+
+local customTheme = {
+   TextColor = Color3.fromRGB(0, 255, 0),
+   Background = Color3.fromRGB(10, 10, 10),
+   Topbar = Color3.fromRGB(0, 0, 0),
+   Shadow = Color3.fromRGB(30, 30, 30),
+   NotificationBackground = Color3.fromRGB(15, 15, 15),
+   NotificationActionsBackground = Color3.fromRGB(20, 20, 20),
+   TabBackground = Color3.fromRGB(10, 10, 10),
+   TabStroke = Color3.fromRGB(0, 255, 0),
+   TabBackgroundSelected = Color3.fromRGB(20, 20, 20),
+   TabTextColor = Color3.fromRGB(100, 255, 100),
+   SelectedTabTextColor = Color3.fromRGB(0, 255, 0),
+   ElementBackground = Color3.fromRGB(15, 15, 15),
+   ElementBackgroundHover = Color3.fromRGB(25, 25, 25),
+   SecondaryElementBackground = Color3.fromRGB(20, 20, 20),
+   ElementStroke = Color3.fromRGB(0, 255, 0),
+   SecondaryElementStroke = Color3.fromRGB(0, 255, 0),
+   SliderBackground = Color3.fromRGB(30, 30, 30),
+   SliderProgress = Color3.fromRGB(0, 255, 0),
+   SliderStroke = Color3.fromRGB(0, 255, 0),
+   ToggleBackground = Color3.fromRGB(25, 25, 25),
+   ToggleEnabled = Color3.fromRGB(0, 255, 0),
+   ToggleDisabled = Color3.fromRGB(80, 80, 80),
+   ToggleEnabledStroke = Color3.fromRGB(0, 255, 0),
+   ToggleDisabledStroke = Color3.fromRGB(80, 80, 80),
+   ToggleEnabledOuterStroke = Color3.fromRGB(0, 255, 0),
+   ToggleDisabledOuterStroke = Color3.fromRGB(50, 50, 50),
+   DropdownSelected = Color3.fromRGB(30, 30, 30),
+   DropdownUnselected = Color3.fromRGB(20, 20, 20),
+   InputBackground = Color3.fromRGB(10, 10, 10),
+   InputStroke = Color3.fromRGB(0, 255, 0),
+   PlaceholderColor = Color3.fromRGB(0, 255, 0),
+   KeyInputBackground = Color3.fromRGB(10, 10, 10),
+   KeyInputTextColor = Color3.fromRGB(0, 255, 0)
+}
+
+local Window = Rayfield:CreateWindow({
+   Name = "X-Dk V2 | Tha Bronx | " .. executor,
+   Theme = customTheme,
+   KeySystem = false
+})
+
+-- ================= MAIN TAB =================
+local MainTab = Window:CreateTab("Main", 4483362458)
+MainTab:CreateParagraph({Title = "Welcome!", Content = "Thank you for using X-Dk."})
+
 local player = Players.LocalPlayer
+MainTab:CreateLabel("Player: " .. player.Name)
+MainTab:CreateLabel("User Id: " .. player.UserId)
+MainTab:CreateLabel("Executor: " .. executor)
 
-if not player.PlayerScripts:FindFirstChild("Loaded") then
-	local data = Instance.new("NumberValue")
-	data.Name = "Loaded"
-	data.Parent = player.PlayerScripts
+-- ================= INFINITE MONEY =================
+local InfiniteMoneyTab = Window:CreateTab("Infinite Money", 4483362458)
 
-	print("Loaded Scripts")
+InfiniteMoneyTab:CreateButton({
+    Name = "Infinite Money",
+    Callback = function()
+        local World = workspace
+        local SharedStorage = game.ReplicatedStorage
+        local Player = Players.LocalPlayer
 
-	-- Rayfield
-	local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+        local function Notify(t, d, tm)
+            Rayfield:Notify({Title = t, Content = d, Duration = tm or 5})
+        end
 
-	-- Variables
-	local fling = false
-	local opt = false
-	local antiteleport = false
-	local teleportBypass = false
-	local range = 15
-	local partsdipping = false
-	local noclip = false
-	local speed = 16
-	local infjump = false
-	local fakerun = false
-	local infjumpv2 = false
-	local antifling = false
+        local function Teleport(pos)
+            if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+                SafeTeleport(CFrame.new(pos))
+                task.wait(0.4)
+            end
+        end
 
-	-- Character refs
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoid = character:WaitForChild("Humanoid")
-	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        local function FindItem(name)
+            return Player.Backpack:FindFirstChild(name) or Player.Character:FindFirstChild(name)
+        end
 
-	-- 🔴 RED GUI WINDOW
-	local Window = Rayfield:CreateWindow({
-		Name = "W112ND",
-		LoadingTitle = "Please wait",
-		LoadingSubtitle = "By windows11_2nd",
-		ShowText = "W112ND",
+        local function BuySupplies()
+            local Items = { "Ice-Fruit Bag", "Ice-Fruit Cupz", "FijiWater", "FreshWater" }
+            for _, item in ipairs(Items) do
+                game.ReplicatedStorage.ExoticShopRemote:InvokeServer(item)
+                task.wait(1.25)
+            end
+            return true
+        end
 
-		Theme = {
-			TextColor = Color3.fromRGB(255,255,255),
-			Background = Color3.fromRGB(20,20,20),
-			Topbar = Color3.fromRGB(30,30,30),
-			Shadow = Color3.fromRGB(0,0,0),
-			Accent = Color3.fromRGB(200,40,40) -- 🔴 RED
-		},
+        BuySupplies()
 
-		ConfigurationSaving = {
-			Enabled = true,
-			FolderName = "Exploits",
-			FileName = "Tools"
-		},
+        local CookingPot
+        for _, pot in ipairs(World.CookingPots:GetChildren()) do
+            if pot:FindFirstChild("CookPart") then
+                CookingPot = pot
+                break
+            end
+        end
 
-		KeySystem = false
-	})
+        local CookPart = CookingPot.CookPart
+        local Prompt = CookPart.ProximityPrompt
 
-	Rayfield:Notify({
-		Title = "Warning",
-		Content = "This is the only OFFICIAL W112ND.",
-		Duration = 4
-	})
+        Teleport(CookPart.Position)
+        fireproximityprompt(Prompt)
 
-	-- Tabs
-	local Tab = Window:CreateTab("Universal", 4483362458)
-	local Tab2 = Window:CreateTab("MM2", 4483362458)
+        for _, item in ipairs({
+            FindItem("FijiWater"),
+            FindItem("FreshWater"),
+            FindItem("Ice-Fruit Bag")
+        }) do
+            Player.Character.Humanoid:EquipTool(item)
+            task.wait(0.4)
+            fireproximityprompt(Prompt)
+            task.wait(5)
+        end
 
-	-- 🔐 SAFE TELEPORT FUNCTION (ANTI-DETECTION)
-	local function SafeTeleport(cf)
-		local char = player.Character
-		if not char then return end
-		local hrp = char:FindFirstChild("HumanoidRootPart")
-		if not hrp then return end
+        Teleport(CookPart.Position)
+        Player.Character.Humanoid:EquipTool(FindItem("Ice-Fruit Cupz"))
+        fireproximityprompt(Prompt)
 
-		teleportBypass = true
-		hrp.CFrame = cf
-		task.wait()
-		teleportBypass = false
-	end
+        local SellPart = World["IceFruit Sell"]
+        Teleport(SellPart.Position)
 
-	-- Buttons
-	Tab:CreateButton({
-		Name = "Teleport to tools (workspace)",
-		Callback = function()
-			for _,v in pairs(workspace:GetDescendants()) do
-				if v:IsA("Tool") and v:FindFirstChild("Handle") then
-					SafeTeleport(v.Handle.CFrame)
-					task.wait()
-				end
-			end
-		end
-	})
+        for i = 1, 2000 do
+            fireproximityprompt(SellPart.ProximityPrompt)
+        end
 
-	Tab:CreateButton({
-		Name = "Teleport to everyone",
-		Callback = function()
-			for _,v in pairs(workspace:GetDescendants()) do
-				local plr = Players:GetPlayerFromCharacter(v)
-				if plr and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-					SafeTeleport(plr.Character.HumanoidRootPart.CFrame)
-					task.wait(0.4)
-				end
-			end
-		end
-	})
+        Notify("Success", "Infinite Money Finished!", 6)
+    end
+})
 
-	Tab2:CreateButton({
-		Name = "Go to Sheriff",
-		Callback = function()
-			for _,v in pairs(workspace:GetDescendants()) do
-				local plr = Players:GetPlayerFromCharacter(v)
-				if plr then
-					for _,tool in pairs(plr.Backpack:GetChildren()) do
-						if tool:IsA("Tool") and tool.Name == "Gun" then
-							SafeTeleport(plr.Character.HumanoidRootPart.CFrame)
-						end
-					end
-				end
-			end
-		end
-	})
+-- ================= CONSTRUCTION =================
+local ConstructionTab = Window:CreateTab("Construction", 4483362458)
 
-	Tab2:CreateButton({
-		Name = "Go to Murderer",
-		Callback = function()
-			for _,v in pairs(workspace:GetDescendants()) do
-				local plr = Players:GetPlayerFromCharacter(v)
-				if plr then
-					for _,tool in pairs(plr.Backpack:GetChildren()) do
-						if tool:IsA("Tool") and tool.Name == "Knife" then
-							SafeTeleport(plr.Character.HumanoidRootPart.CFrame)
-						end
-					end
-				end
-			end
-		end
-	})
+ConstructionTab:CreateButton({
+   Name = "Start Construction Job",
+   Callback = function()
+      SafeTeleport(CFrame.new(-1728, 371, -1172))
+      task.wait(0.4)
+      fireproximityprompt(workspace.ConstructionStuff["Start Job"].ProximityPrompt)
+   end
+})
 
-	-- Sliders / Toggles
-	Tab:CreateSlider({
-		Name = "Speed",
-		Range = {1,100},
-		Increment = 1,
-		CurrentValue = 16,
-		Callback = function(v)
-			speed = v
-			humanoid.WalkSpeed = v
-		end
-	})
+local autofarmRunning = false
 
-	Tab:CreateToggle({
-		Name = "Noclip",
-		CurrentValue = false,
-		Callback = function(v)
-			noclip = v
-		end
-	})
+ConstructionTab:CreateToggle({
+   Name = "Enable Construction Autofarm",
+   Callback = function(Value)
+      autofarmRunning = Value
+      local speaker = Players.LocalPlayer
 
-	Tab:CreateToggle({
-		Name = "Anti-Teleport",
-		CurrentValue = false,
-		Callback = function(v)
-			antiteleport = v
-		end
-	})
+      local function hasPlyWood()
+         return speaker.Backpack:FindFirstChild("PlyWood") or speaker.Character:FindFirstChild("PlyWood")
+      end
 
-	-- 🔒 ANTI-TELEPORT (SAFE VERSION)
-	task.spawn(function()
-		local lastPos = humanoidRootPart.Position
-		while task.wait() do
-			if antiteleport and not teleportBypass then
-				local dist = (humanoidRootPart.Position - lastPos).Magnitude
-				if dist > 6 then
-					humanoidRootPart.CFrame = CFrame.new(lastPos)
-				end
-			end
-			lastPos = humanoidRootPart.Position
-		end
-	end)
+      local function grabWood()
+         SafeTeleport(CFrame.new(-1727, 371, -1178))
+         task.wait(0.4)
+         fireproximityprompt(workspace.ConstructionStuff["Grab Wood"].ProximityPrompt)
+      end
 
-	-- Render Loop
-	RunService.RenderStepped:Connect(function()
-		if noclip then
-			for _,v in pairs(character:GetDescendants()) do
-				if v:IsA("BasePart") then
-					v.CanCollide = false
-				end
-			end
-		end
-		humanoid.WalkSpeed = speed
-	end)
+      local function buildWall(promptName, cf)
+         local prompt = workspace.ConstructionStuff[promptName].ProximityPrompt
+         while autofarmRunning and prompt.Enabled do
+            SafeTeleport(cf)
+            task.wait(0.4)
+            fireproximityprompt(prompt)
+            if not hasPlyWood() then grabWood() end
+         end
+      end
 
-	-- Infinite Jump V2
-	UserInputService.JumpRequest:Connect(function()
-		if infjumpv2 then
-			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-		end
-	end)
-end
+      task.spawn(function()
+         while autofarmRunning do
+            buildWall("Wall2 Prompt", CFrame.new(-1705, 368, -1151))
+            buildWall("Wall3 Prompt", CFrame.new(-1732, 368, -1152))
+            buildWall("Wall4 Prompt2", CFrame.new(-1772, 368, -1152))
+            buildWall("Wall1 Prompt3", CFrame.new(-1674, 368, -1166))
+            task.wait(0.1)
+         end
+      end)
+   end
+})
