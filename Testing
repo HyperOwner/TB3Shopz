@@ -1,0 +1,204 @@
+--[[
+you better have a good reason on WHY you are looking at the script raw
+]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+if not player.PlayerScripts:FindFirstChild("Loaded") then
+	local data = Instance.new("NumberValue")
+	data.Name = "Loaded"
+	data.Parent = player.PlayerScripts
+
+	print("Loaded Scripts")
+
+	-- Rayfield
+	local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+	-- Variables
+	local fling = false
+	local opt = false
+	local antiteleport = false
+	local teleportBypass = false
+	local range = 15
+	local partsdipping = false
+	local noclip = false
+	local speed = 16
+	local infjump = false
+	local fakerun = false
+	local infjumpv2 = false
+	local antifling = false
+
+	-- Character refs
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+	-- 🔴 RED GUI WINDOW
+	local Window = Rayfield:CreateWindow({
+		Name = "W112ND",
+		LoadingTitle = "Please wait",
+		LoadingSubtitle = "By windows11_2nd",
+		ShowText = "W112ND",
+
+		Theme = {
+			TextColor = Color3.fromRGB(255,255,255),
+			Background = Color3.fromRGB(20,20,20),
+			Topbar = Color3.fromRGB(30,30,30),
+			Shadow = Color3.fromRGB(0,0,0),
+			Accent = Color3.fromRGB(200,40,40) -- 🔴 RED
+		},
+
+		ConfigurationSaving = {
+			Enabled = true,
+			FolderName = "Exploits",
+			FileName = "Tools"
+		},
+
+		KeySystem = false
+	})
+
+	Rayfield:Notify({
+		Title = "Warning",
+		Content = "This is the only OFFICIAL W112ND.",
+		Duration = 4
+	})
+
+	-- Tabs
+	local Tab = Window:CreateTab("Universal", 4483362458)
+	local Tab2 = Window:CreateTab("MM2", 4483362458)
+
+	-- 🔐 SAFE TELEPORT FUNCTION (ANTI-DETECTION)
+	local function SafeTeleport(cf)
+		local char = player.Character
+		if not char then return end
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+
+		teleportBypass = true
+		hrp.CFrame = cf
+		task.wait()
+		teleportBypass = false
+	end
+
+	-- Buttons
+	Tab:CreateButton({
+		Name = "Teleport to tools (workspace)",
+		Callback = function()
+			for _,v in pairs(workspace:GetDescendants()) do
+				if v:IsA("Tool") and v:FindFirstChild("Handle") then
+					SafeTeleport(v.Handle.CFrame)
+					task.wait()
+				end
+			end
+		end
+	})
+
+	Tab:CreateButton({
+		Name = "Teleport to everyone",
+		Callback = function()
+			for _,v in pairs(workspace:GetDescendants()) do
+				local plr = Players:GetPlayerFromCharacter(v)
+				if plr and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+					SafeTeleport(plr.Character.HumanoidRootPart.CFrame)
+					task.wait(0.4)
+				end
+			end
+		end
+	})
+
+	Tab2:CreateButton({
+		Name = "Go to Sheriff",
+		Callback = function()
+			for _,v in pairs(workspace:GetDescendants()) do
+				local plr = Players:GetPlayerFromCharacter(v)
+				if plr then
+					for _,tool in pairs(plr.Backpack:GetChildren()) do
+						if tool:IsA("Tool") and tool.Name == "Gun" then
+							SafeTeleport(plr.Character.HumanoidRootPart.CFrame)
+						end
+					end
+				end
+			end
+		end
+	})
+
+	Tab2:CreateButton({
+		Name = "Go to Murderer",
+		Callback = function()
+			for _,v in pairs(workspace:GetDescendants()) do
+				local plr = Players:GetPlayerFromCharacter(v)
+				if plr then
+					for _,tool in pairs(plr.Backpack:GetChildren()) do
+						if tool:IsA("Tool") and tool.Name == "Knife" then
+							SafeTeleport(plr.Character.HumanoidRootPart.CFrame)
+						end
+					end
+				end
+			end
+		end
+	})
+
+	-- Sliders / Toggles
+	Tab:CreateSlider({
+		Name = "Speed",
+		Range = {1,100},
+		Increment = 1,
+		CurrentValue = 16,
+		Callback = function(v)
+			speed = v
+			humanoid.WalkSpeed = v
+		end
+	})
+
+	Tab:CreateToggle({
+		Name = "Noclip",
+		CurrentValue = false,
+		Callback = function(v)
+			noclip = v
+		end
+	})
+
+	Tab:CreateToggle({
+		Name = "Anti-Teleport",
+		CurrentValue = false,
+		Callback = function(v)
+			antiteleport = v
+		end
+	})
+
+	-- 🔒 ANTI-TELEPORT (SAFE VERSION)
+	task.spawn(function()
+		local lastPos = humanoidRootPart.Position
+		while task.wait() do
+			if antiteleport and not teleportBypass then
+				local dist = (humanoidRootPart.Position - lastPos).Magnitude
+				if dist > 6 then
+					humanoidRootPart.CFrame = CFrame.new(lastPos)
+				end
+			end
+			lastPos = humanoidRootPart.Position
+		end
+	end)
+
+	-- Render Loop
+	RunService.RenderStepped:Connect(function()
+		if noclip then
+			for _,v in pairs(character:GetDescendants()) do
+				if v:IsA("BasePart") then
+					v.CanCollide = false
+				end
+			end
+		end
+		humanoid.WalkSpeed = speed
+	end)
+
+	-- Infinite Jump V2
+	UserInputService.JumpRequest:Connect(function()
+		if infjumpv2 then
+			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+		end
+	end)
+end
