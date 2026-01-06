@@ -1,4 +1,4 @@
-local Rayfield = loadstring(game:HttpGet('https://[Log in to view URL]'))()
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local executor = identifyexecutor and identifyexecutor() or "Unknown Executor"
 
 local customTheme = {
