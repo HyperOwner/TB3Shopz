@@ -1,22 +1,26 @@
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- SERVICES
 local Players = game:GetService("Players")
+local MarketplaceService = game:GetService("MarketplaceService")
+local TeleportService = game:GetService("TeleportService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- UI
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local executor = identifyexecutor and identifyexecutor() or "Unknown Executor"
 
--- ================= SAFE TELEPORT (FIXED) =================
-local function SafeTeleport(cf)
+-- ================= TELEPORT (FIXED & SIMPLE) =================
+local function Teleport(cf)
     local plr = Players.LocalPlayer
     if not plr.Character then return end
 
-    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    hrp.Anchored = true
-    hrp.CFrame = cf
-    task.wait()
-    hrp.Anchored = false
+    local char = plr.Character
+    if char.PrimaryPart then
+        char:PivotTo(cf)
+    end
 end
--- =========================================================
+-- ============================================================
 
+-- THEME
 local customTheme = {
    TextColor = Color3.fromRGB(0, 255, 0),
    Background = Color3.fromRGB(10, 10, 10),
@@ -24,37 +28,112 @@ local customTheme = {
    Shadow = Color3.fromRGB(30, 30, 30)
 }
 
+-- WINDOW
 local Window = Rayfield:CreateWindow({
    Name = "X-Dk V2 | Tha Bronx | " .. executor,
    Theme = customTheme,
    KeySystem = false
 })
 
--- ================= MAIN =================
+-- ================= MAIN TAB =================
 local MainTab = Window:CreateTab("Main", 4483362458)
-MainTab:CreateLabel("Player: " .. Players.LocalPlayer.Name)
-MainTab:CreateLabel("User Id: " .. Players.LocalPlayer.UserId)
+MainTab:CreateParagraph({
+    Title = "Welcome!",
+    Content = "Thank you for using X-Dk."
+})
+
+local player = Players.LocalPlayer
+MainTab:CreateLabel("Player: " .. player.Name)
+MainTab:CreateLabel("User Id: " .. player.UserId)
+
+local gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
+MainTab:CreateLabel("Game: " .. gameName)
 MainTab:CreateLabel("Executor: " .. executor)
 
 -- ================= INFINITE MONEY =================
 local InfiniteMoneyTab = Window:CreateTab("Infinite Money", 4483362458)
+InfiniteMoneyTab:CreateLabel("Read Before Use: This does not work for Xeno or Solara")
 
 InfiniteMoneyTab:CreateButton({
     Name = "Infinite Money",
     Callback = function()
         local Player = Players.LocalPlayer
         local World = workspace
+        local SharedStorage = ReplicatedStorage
 
-        local function Teleport(pos)
-            SafeTeleport(CFrame.new(pos))
-            task.wait(0.4)
+        local function Notify(t, d, tm)
+            Rayfield:Notify({
+                Title = t,
+                Content = d,
+                Duration = tm or 5
+            })
         end
 
         local function FindItem(name)
-            return Player.Backpack:FindFirstChild(name) or Player.Character:FindFirstChild(name)
+            return Player.Backpack:FindFirstChild(name)
+                or (Player.Character and Player.Character:FindFirstChild(name))
         end
 
-        Teleport(Vector3.new(0,0,0)) -- example (kept logic same)
+        local function BuySupplies()
+            local Items = { "Ice-Fruit Bag", "Ice-Fruit Cupz", "FijiWater", "FreshWater" }
+            for _, item in ipairs(Items) do
+                SharedStorage.ExoticShopRemote:InvokeServer(item)
+                task.wait(1.25)
+            end
+            return true
+        end
+
+        BuySupplies()
+
+        local CookingPot
+        for _, pot in ipairs(World.CookingPots:GetChildren()) do
+            if pot:FindFirstChild("CookPart") then
+                CookingPot = pot
+                break
+            end
+        end
+        if not CookingPot then
+            Notify("Error", "No cooking pot found", 5)
+            return
+        end
+
+        local CookPart = CookingPot.CookPart
+        local Prompt = CookPart:FindFirstChildOfClass("ProximityPrompt")
+
+        Teleport(CFrame.new(CookPart.Position))
+        task.wait(0.4)
+        fireproximityprompt(Prompt)
+
+        for _, itemName in ipairs({ "FijiWater", "FreshWater", "Ice-Fruit Bag" }) do
+            local item = FindItem(itemName)
+            if item then
+                Player.Character.Humanoid:EquipTool(item)
+                task.wait(0.4)
+                fireproximityprompt(Prompt)
+                task.wait(5)
+            end
+        end
+
+        Teleport(CFrame.new(CookPart.Position))
+        task.wait(0.3)
+        Player.Character.Humanoid:EquipTool(FindItem("Ice-Fruit Cupz"))
+        fireproximityprompt(Prompt)
+
+        local SellPart = World:FindFirstChild("IceFruit Sell")
+        if not SellPart then
+            Notify("Error", "Sell part not found", 5)
+            return
+        end
+
+        Teleport(CFrame.new(SellPart.Position))
+        task.wait(0.4)
+
+        local SellPrompt = SellPart:FindFirstChildOfClass("ProximityPrompt")
+        for i = 1, 2000 do
+            fireproximityprompt(SellPrompt)
+        end
+
+        Notify("Success", "Infinite Money Finished!", 6)
     end
 })
 
@@ -62,32 +141,84 @@ InfiniteMoneyTab:CreateButton({
 local ConstructionTab = Window:CreateTab("Construction", 4483362458)
 
 ConstructionTab:CreateButton({
-   Name = "Start Construction Job",
-   Callback = function()
-      SafeTeleport(CFrame.new(-1728, 371, -1172))
-      task.wait(0.4)
-      fireproximityprompt(workspace.ConstructionStuff["Start Job"].ProximityPrompt)
-   end
+    Name = "Join VC Server",
+    Callback = function()
+        TeleportService:Teleport(18642421777, Players.LocalPlayer)
+    end
 })
+
+ConstructionTab:CreateButton({
+    Name = "Start Construction Job",
+    Callback = function()
+        Teleport(CFrame.new(-1728, 371, -1172))
+        task.wait(0.4)
+        fireproximityprompt(
+            workspace.ConstructionStuff["Start Job"]:FindFirstChildOfClass("ProximityPrompt")
+        )
+    end
+})
+
+ConstructionTab:CreateSection("Construction Autofarm")
 
 local autofarmRunning = false
 
 ConstructionTab:CreateToggle({
-   Name = "Enable Construction Autofarm",
-   Callback = function(Value)
-      autofarmRunning = Value
+    Name = "Enable Construction Autofarm",
+    CurrentValue = false,
+    Callback = function(Value)
+        autofarmRunning = Value
+        local speaker = Players.LocalPlayer
 
-      local function grabWood()
-         SafeTeleport(CFrame.new(-1727, 371, -1178))
-         task.wait(0.4)
-         fireproximityprompt(workspace.ConstructionStuff["Grab Wood"].ProximityPrompt)
-      end
+        local function hasPlyWood()
+            return speaker.Backpack:FindFirstChild("PlyWood")
+                or (speaker.Character and speaker.Character:FindFirstChild("PlyWood"))
+        end
 
-      task.spawn(function()
-         while autofarmRunning do
-            grabWood()
-            task.wait(1)
-         end
-      end)
-   end
+        local function equipPlyWood()
+            local backpack = speaker.Backpack
+            if backpack and backpack:FindFirstChild("PlyWood") then
+                backpack.PlyWood.Parent = speaker.Character
+            end
+        end
+
+        local function grabWood()
+            Teleport(CFrame.new(-1727, 371, -1178))
+            task.wait(0.2)
+            fireproximityprompt(
+                workspace.ConstructionStuff["Grab Wood"]:FindFirstChildOfClass("ProximityPrompt")
+            )
+            task.wait(0.1)
+            equipPlyWood()
+        end
+
+        local function buildWall(promptName, cf)
+            local prompt = workspace.ConstructionStuff[promptName]:FindFirstChildOfClass("ProximityPrompt")
+            while autofarmRunning and prompt and prompt.Enabled do
+                Teleport(cf)
+                task.wait(0.05)
+                fireproximityprompt(prompt)
+                task.wait()
+                if not hasPlyWood() then
+                    grabWood()
+                end
+            end
+        end
+
+        if autofarmRunning then
+            task.spawn(function()
+                while autofarmRunning do
+                    if not hasPlyWood() then
+                        grabWood()
+                    end
+
+                    buildWall("Wall2 Prompt", CFrame.new(-1705, 368, -1151))
+                    buildWall("Wall3 Prompt", CFrame.new(-1732, 368, -1152))
+                    buildWall("Wall4 Prompt2", CFrame.new(-1772, 368, -1152))
+                    buildWall("Wall1 Prompt3", CFrame.new(-1674, 368, -1166))
+
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end
 })
